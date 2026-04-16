@@ -17,3 +17,10 @@ class Note(Base):
     content = Column(String)
     user_id = Column(Integer, ForeignKey('users.id'))
     owner = relationship("User", back_populates="notes")
+
+
+class RefreshToken(Base):
+    __tablename__ = 'refresh_tokens'
+    id = Column(Integer,primary_key=True)
+    token = Column(String,unique=True,nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id'))
