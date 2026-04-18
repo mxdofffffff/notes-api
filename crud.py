@@ -20,8 +20,8 @@ def create_note(db:Session, title: str, content: str,user_id:int):
     db.refresh(new_note)
     return new_note
 
-def edit_note(db:Session, note_id:int, title: str, content: str,user_id:int):
-    db_note = db.query(Note).filter(Note.id == note_id,Note.user_id==user_id).first()
+def edit_note(db:Session, note_id:int, title: str, content: str):
+    db_note = db.query(Note).filter(Note.id == note_id).first()
     if db_note is None:
         return None
     db_note.title = title
@@ -31,8 +31,11 @@ def edit_note(db:Session, note_id:int, title: str, content: str,user_id:int):
     return db_note
 
 
-def get_notes_by_user(db:Session, user_id:int,limit:int = 10, skip:int = 0):
-    query=db.query(Note).filter(Note.user_id == user_id).offset(skip).limit(limit)
+def get_notes_by_user(db:Session, user_id:int,limit:int = 10, skip:int = 0,search:str = None):
+    query=db.query(Note).filter(Note.user_id == user_id)
+    if search:
+        query = query.filter(Note.title.contains(search))
+    query = query.offset(skip).limit(limit)
     return query.all()
 
 def get_note(db:Session, note_id:int,user_id:int):
@@ -41,8 +44,8 @@ def get_note(db:Session, note_id:int,user_id:int):
         return None
     return db_note
 
-def delete_note(db:Session,note_id:int,user_id:int):
-    note = db.query(Note).filter(Note.id == note_id,Note.user_id==user_id).first()
+def delete_note(db:Session,note_id:int):
+    note = db.query(Note).filter(Note.id == note_id).first()
     if note is None:
         return None
     db.delete(note)
