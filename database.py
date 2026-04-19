@@ -1,9 +1,9 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import DeclarativeBase
-DATABASE_URL = "sqlite:///db.sqlite3"
+DATABASE_URL = "postgresql://postgres:postgres@db:5432/notes_db"
 
-engine = create_engine(DATABASE_URL,connect_args={"check_same_thread":False})
+engine = create_engine(DATABASE_URL)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

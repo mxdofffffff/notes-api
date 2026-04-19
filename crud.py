@@ -34,7 +34,7 @@ def edit_note(db:Session, note_id:int, title: str, content: str):
 def get_notes_by_user(db:Session, user_id:int,limit:int = 10, skip:int = 0,search:str = None):
     query=db.query(Note).filter(Note.user_id == user_id)
     if search:
-        query = query.filter(Note.title.contains(search))
+        query = query.filter(Note.title.ilike(f"%{search}%"))
     query = query.offset(skip).limit(limit)
     return query.all()
 
