@@ -1,7 +1,6 @@
 from pydantic import BaseModel
 
 
-
 class UserCreate(BaseModel):
     username: str
     password: str
@@ -29,9 +28,17 @@ class NoteResponse(BaseModel):
     class Config:
         from_attributes = True
 
+
+class NoteListResponse(BaseModel):
+    items: list[NoteResponse]
+    total: int
+    limit: int
+    skip: int
+
+
 class NoteUpdate(BaseModel):
-    title: str
-    content: str
+    title: str | None = None
+    content: str | None = None
 
 class Token(BaseModel):
     access_token: str

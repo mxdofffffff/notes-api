@@ -1,6 +1,8 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from models import User,Note
+from schemas import NoteUpdate
+
 
 def get_user_by_username(db:Session, username: str):
     db_user = db.query(User).filter(User.username == username).first()
@@ -20,23 +22,45 @@ def create_note(db:Session, title: str, content: str,user_id:int):
     db.refresh(new_note)
     return new_note
 
-def edit_note(db:Session, note_id:int, title: str, content: str):
+def edit_note(db:Session, note_id:int, note_data:NoteUpdate):
     db_note = db.query(Note).filter(Note.id == note_id).first()
     if db_note is None:
         return None
-    db_note.title = title
-    db_note.content = content
+    if note_data.title is not None:
+        db_note.title = note_data.title
+    if note_data.content is not None:
+        db_note.content = note_data.content
     db.commit()
     db.refresh(db_note)
     return db_note
 
 
-def get_notes_by_user(db:Session, user_id:int,limit:int = 10, skip:int = 0,search:str = None):
+def get_notes_by_user(
+        db:Session,
+        user_id:int,
+        limit:int = 10,
+        skip:int = 0,
+        search:str = None,
+        sort:str = None,
+        date_from = None,
+        date_to = None
+):
     query=db.query(Note).filter(Note.user_id == user_id)
     if search:
         query = query.filter(Note.title.ilike(f"%{search}%"))
-    query = query.offset(skip).limit(limit)
-    return query.all()
+    if date_from:
+        query = query.filter(Note.created_at >= date_from)
+    if date_to:
+        query = query.filter(Note.created_at <= date_to)
+    if sort == "asc":
+        query = query.order_by(Note.id.asc())
+    elif sort == "desc":
+        query = query.order_by(Note.id.desc())
+    total = query.count()
+    items = query.limit(limit).offset(skip).all()
+    return items,total
+
+
 
 def get_note(db:Session, note_id:int,user_id:int):
     db_note = db.query(Note).filter(Note.id == note_id,Note.user_id== user_id).first()

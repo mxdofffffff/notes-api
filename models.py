@@ -1,6 +1,7 @@
-from sqlalchemy import Column,String,Integer,ForeignKey
+from sqlalchemy import Column,String,Integer,ForeignKey,DateTime
 from database import Base
 from sqlalchemy.orm import relationship
+from datetime import datetime
 
 
 class User(Base):
@@ -17,7 +18,7 @@ class Note(Base):
     content = Column(String)
     user_id = Column(Integer, ForeignKey('users.id'))
     owner = relationship("User", back_populates="notes")
-
+    created_at = Column(DateTime,default=datetime.utcnow)
 
 class RefreshToken(Base):
     __tablename__ = 'refresh_tokens'
