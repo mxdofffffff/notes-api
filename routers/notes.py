@@ -34,5 +34,12 @@ def edit_notes(note_id:int,note_data:NoteUpdate,db:Session = Depends(get_db),cur
 
 @router.delete("/notes/{note_id}")
 def delete_note(note_id:int,db:Session = Depends(get_db),current_user = Depends(get_current_user)):
-    note_service.delete_note(db,note_id,current_user)
-    return {"message":"Note deleted successfully"}
+    return note_service.delete_note(db,note_id,current_user)
+
+@router.post("/notes/{note_id}/restore",response_model=NoteResponse)
+def restore_note(note_id:int,db:Session = Depends(get_db),current_user = Depends(get_current_user)):
+    return note_service.restore_note(db,note_id,current_user)
+
+@router.get("/notes/deleted",response_model=list[NoteResponse])
+def get_deleted_notes(db:Session = Depends(get_db),current_user = Depends(get_current_user)):
+    return note_service.get_deleted_notes(db,current_user)

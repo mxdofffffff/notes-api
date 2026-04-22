@@ -15,13 +15,26 @@ def get_notes(db,current_user,limit,skip,search = None,sort = None,date_from = N
     }
 
 def update_note(db,note_id,note_data,current_user):
-    note = crud.get_note(db, note_id, current_user.id)
+    note = crud.edit_note(db, note_id,note_data, current_user.id)
     if note is None:
         raise HTTPException(status_code=404, detail="Note not found")
-    return crud.edit_note(db, note_id, note_data)
+    return note
 
 def delete_note(db,note_id,current_user):
-    note = crud.get_note(db, note_id, current_user.id)
+    note = crud.delete_note(db, note_id, current_user.id)
     if note is None:
         raise HTTPException(status_code=404, detail="Note not found")
-    return crud.delete_note(db, note_id)
+    return {"message":"Note deleted successfully"}
+
+
+def restore_note(db,note_id,current_user):
+    note = crud.restore_note(db, note_id, current_user.id)
+    if note is None:
+        raise HTTPException(status_code=404, detail="Note not found")
+    return note
+
+def get_deleted_notes(db,current_user):
+    notes = crud.get_deleted_notes(db, current_user.id)
+    if notes is None:
+        raise HTTPException(status_code=404, detail="Notes not found")
+    return notes

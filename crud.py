@@ -22,8 +22,8 @@ def create_note(db:Session, title: str, content: str,user_id:int):
     db.refresh(new_note)
     return new_note
 
-def edit_note(db:Session, note_id:int, note_data:NoteUpdate):
-    db_note = db.query(Note).filter(Note.id == note_id).first()
+def edit_note(db:Session, note_id:int, note_data:NoteUpdate,user_id:int):
+    db_note = db.query(Note).filter(Note.id == note_id,Note.user_id == user_id,Note.is_deleted == False).first()
     if db_note is None:
         return None
     if note_data.title is not None:
@@ -45,7 +45,7 @@ def get_notes_by_user(
         date_from = None,
         date_to = None
 ):
-    query=db.query(Note).filter(Note.user_id == user_id)
+    query=db.query(Note).filter(Note.user_id == user_id,Note.is_deleted == False)
     if search:
         query = query.filter(Note.title.ilike(f"%{search}%"))
     if date_from:
@@ -61,17 +61,32 @@ def get_notes_by_user(
     return items,total
 
 
-
 def get_note(db:Session, note_id:int,user_id:int):
-    db_note = db.query(Note).filter(Note.id == note_id,Note.user_id== user_id).first()
+    db_note = db.query(Note).filter(Note.id == note_id,Note.user_id == user_id,Note.is_deleted == False).first()
     if db_note is None:
         return None
     return db_note
 
-def delete_note(db:Session,note_id:int):
-    note = db.query(Note).filter(Note.id == note_id).first()
+def delete_note(db:Session,note_id:int,user_id:int):
+    note = db.query(Note).filter(Note.id == note_id,Note.user_id==user_id,Note.is_deleted == False).first()
     if note is None:
         return None
-    db.delete(note)
+    note.is_deleted = True
     db.commit()
+    return note
+
+
+def restore_note(db:Session,note_id:int,user_id:int):
+    note = db.query(Note).filter(Note.id == note_id,Note.user_id==user_id,Note.is_deleted == True).first()
+    if note is None:
+        return None
+    note.is_deleted = False
+    db.commit()
+    return note
+
+
+def get_deleted_notes(db:Session,user_id:int):
+    note = db.query(Note).filter(Note.user_id == user_id,Note.is_deleted == True).all()
+    if note is None:
+        return None
     return note

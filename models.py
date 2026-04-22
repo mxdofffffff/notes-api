@@ -2,7 +2,7 @@ from sqlalchemy import Column,String,Integer,ForeignKey,DateTime
 from database import Base
 from sqlalchemy.orm import relationship
 from datetime import datetime
-
+from sqlalchemy import Boolean
 
 class User(Base):
     __tablename__ = 'users'
@@ -19,6 +19,7 @@ class Note(Base):
     user_id = Column(Integer, ForeignKey('users.id'))
     owner = relationship("User", back_populates="notes")
     created_at = Column(DateTime,default=datetime.utcnow)
+    is_deleted = Column(Boolean,default=False)
 
 class RefreshToken(Base):
     __tablename__ = 'refresh_tokens'
