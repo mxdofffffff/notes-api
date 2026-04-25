@@ -28,12 +28,14 @@ class NoteResponse(BaseModel):
     class Config:
         from_attributes = True
 
-
-class NoteListResponse(BaseModel):
-    items: list[NoteResponse]
+class Meta(BaseModel):
     total: int
     limit: int
     skip: int
+
+class NoteListResponse(BaseModel):
+    data: list[NoteResponse]
+    meta: Meta
 
 
 class NoteUpdate(BaseModel):

@@ -8,10 +8,12 @@ def create_note(db,note_data,current_user):
 def get_notes(db,current_user,limit,skip,search = None,sort = None,date_from = None,date_to = None):
     items,total= crud.get_notes_by_user(db,current_user.id,limit,skip,search,sort,date_from,date_to)
     return {
-        "items":items,
-        "total":total,
-        "limit":limit,
-        "skip":skip,
+        "data": items,
+        "meta": {
+            "total": total,
+            "limit": limit,
+            "skip": skip,
+        }
     }
 
 def update_note(db,note_id,note_data,current_user):

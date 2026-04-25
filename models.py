@@ -3,7 +3,6 @@ from database import Base
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from sqlalchemy import Boolean
-
 class User(Base):
     __tablename__ = 'users'
     id=Column(Integer,primary_key=True)
