@@ -19,6 +19,7 @@ class Note(Base):
     owner = relationship("User", back_populates="notes")
     created_at = Column(DateTime,default=datetime.utcnow)
     is_deleted = Column(Boolean,default=False)
+    is_favorite = Column(Boolean,nullable = False,default = False)
 
 class RefreshToken(Base):
     __tablename__ = 'refresh_tokens'

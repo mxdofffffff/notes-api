@@ -40,3 +40,15 @@ def get_deleted_notes(db,current_user):
     if notes is None:
         raise HTTPException(status_code=404, detail="Notes not found")
     return notes
+
+def get_favorites(db,current_user):
+    notes = crud.get_favorites(db, current_user.id)
+    if notes is None:
+        raise HTTPException(status_code=404, detail="Notes not found")
+    return notes
+
+def like_note(db,note_id,current_user):
+    note = crud.like_note(db, note_id, current_user.id)
+    if note is None:
+        raise HTTPException(status_code=404, detail="Note not found")
+    return note

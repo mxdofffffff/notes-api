@@ -25,6 +25,7 @@ class NoteResponse(BaseModel):
     title: str
     content: str
     user_id: int
+    is_favorite: bool | None
     class Config:
         from_attributes = True
 

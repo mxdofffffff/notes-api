@@ -16,7 +16,7 @@ def create_user(db:Session, username: str, hashed_password: str):
     return new_user
 
 def create_note(db:Session, title: str, content: str,user_id:int):
-    new_note = Note(title=title, content=content, user_id=user_id)
+    new_note = Note(title=title, content=content, user_id=user_id , is_favorite = False)
     db.add(new_note)
     db.commit()
     db.refresh(new_note)
@@ -89,4 +89,19 @@ def get_deleted_notes(db:Session,user_id:int):
     note = db.query(Note).filter(Note.user_id == user_id,Note.is_deleted == True).all()
     if note is None:
         return None
+    return note
+
+def get_favorites(db:Session,user_id:int):
+    notes = db.query(Note).filter(Note.user_id == user_id,Note.is_favorite == True).all()
+    if notes is None:
+        return None
+    return notes
+
+def like_note(db:Session,note_id:int,user_id:int):
+    note = db.query(Note).filter(Note.id == note_id,Note.user_id == user_id,Note.is_deleted == False).first()
+    if note is None:
+        return None
+    note.is_favorite = True
+    db.commit()
+    db.refresh(note)
     return note

@@ -43,3 +43,13 @@ def restore_note(note_id:int,db:Session = Depends(get_db),current_user = Depends
 @router.get("/notes/deleted",response_model=list[NoteResponse])
 def get_deleted_notes(db:Session = Depends(get_db),current_user = Depends(get_current_user)):
     return note_service.get_deleted_notes(db,current_user)
+
+
+@router.get("/notes/favorites",response_model=list[NoteResponse])
+def get_favorites(db:Session = Depends(get_db),current_user = Depends(get_current_user)):
+    return note_service.get_favorites(db,current_user)
+
+
+@router.post("/notes/{note_id}/favorite",response_model=NoteResponse)
+def like_note(note_id: int,db:Session = Depends(get_db),current_user = Depends(get_current_user)):
+    return note_service.like_note(db,note_id,current_user)
