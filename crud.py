@@ -30,6 +30,8 @@ def edit_note(db:Session, note_id:int, note_data:NoteUpdate,user_id:int):
         db_note.title = note_data.title
     if note_data.content is not None:
         db_note.content = note_data.content
+    if note_data.is_favorite is not None:
+       db_note.is_favorite = note_data.is_favorite
     db.commit()
     db.refresh(db_note)
     return db_note
@@ -40,6 +42,7 @@ def get_notes_by_user(
         user_id:int,
         limit:int = 10,
         skip:int = 0,
+        is_favorite:bool | None = None,
         search:str = None,
         sort:str = None,
         date_from = None,
@@ -52,6 +55,8 @@ def get_notes_by_user(
         query = query.filter(Note.created_at >= date_from)
     if date_to:
         query = query.filter(Note.created_at <= date_to)
+    if is_favorite is not None:
+        query = query.filter(Note.is_favorite == is_favorite)
     if sort == "asc":
         query = query.order_by(Note.id.asc())
     elif sort == "desc":
@@ -84,24 +89,8 @@ def restore_note(db:Session,note_id:int,user_id:int):
     db.commit()
     return note
 
-
 def get_deleted_notes(db:Session,user_id:int):
     note = db.query(Note).filter(Note.user_id == user_id,Note.is_deleted == True).all()
     if note is None:
         return None
-    return note
-
-def get_favorites(db:Session,user_id:int):
-    notes = db.query(Note).filter(Note.user_id == user_id,Note.is_favorite == True).all()
-    if notes is None:
-        return None
-    return notes
-
-def like_note(db:Session,note_id:int,user_id:int):
-    note = db.query(Note).filter(Note.id == note_id,Note.user_id == user_id,Note.is_deleted == False).first()
-    if note is None:
-        return None
-    note.is_favorite = True
-    db.commit()
-    db.refresh(note)
     return note

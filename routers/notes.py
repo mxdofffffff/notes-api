@@ -22,15 +22,15 @@ def get_notes(
         search:str = Query(default=None),
         sort:str = Query(default=None),
         date_from:datetime = Query(default=None),
-        date_to:datetime = Query(default=None)
+        date_to:datetime = Query(default=None),
+        is_favorite:bool | None = Query(default=None)
 ):
-    return note_service.get_notes(db,current_user,limit,skip,search,sort,date_from,date_to)
+    return note_service.get_notes(db,current_user,limit,skip,is_favorite,search,sort,date_from,date_to)
 
 
-@router.patch("/notes/{note_id}",response_model=NoteResponse)
+@router.patch("/notes/{note_id}",response_model=NoteUpdate)
 def edit_notes(note_id:int,note_data:NoteUpdate,db:Session = Depends(get_db),current_user = Depends(get_current_user)):
     return note_service.update_note(db,note_id,note_data,current_user)
-
 
 @router.delete("/notes/{note_id}")
 def delete_note(note_id:int,db:Session = Depends(get_db),current_user = Depends(get_current_user)):
@@ -43,13 +43,3 @@ def restore_note(note_id:int,db:Session = Depends(get_db),current_user = Depends
 @router.get("/notes/deleted",response_model=list[NoteResponse])
 def get_deleted_notes(db:Session = Depends(get_db),current_user = Depends(get_current_user)):
     return note_service.get_deleted_notes(db,current_user)
-
-
-@router.get("/notes/favorites",response_model=list[NoteResponse])
-def get_favorites(db:Session = Depends(get_db),current_user = Depends(get_current_user)):
-    return note_service.get_favorites(db,current_user)
-
-
-@router.post("/notes/{note_id}/favorite",response_model=NoteResponse)
-def like_note(note_id: int,db:Session = Depends(get_db),current_user = Depends(get_current_user)):
-    return note_service.like_note(db,note_id,current_user)

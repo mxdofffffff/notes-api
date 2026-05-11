@@ -1,9 +1,9 @@
-from pydantic import BaseModel
+from pydantic import BaseModel,Field
 
 
 class UserCreate(BaseModel):
-    username: str
-    password: str
+    username: str = Field(min_length=3,max_length=30)
+    password: str = Field(min_length=4,max_length=30)
 
 
 class UserResponse(BaseModel):
@@ -16,8 +16,8 @@ class UserResponse(BaseModel):
 
 
 class NoteCreate(BaseModel):
-    title: str
-    content: str
+    title: str = Field(min_length=1, max_length=100)
+    content: str = Field(min_length=1, max_length=1000)
 
 
 class NoteResponse(BaseModel):
@@ -40,8 +40,9 @@ class NoteListResponse(BaseModel):
 
 
 class NoteUpdate(BaseModel):
-    title: str | None = None
-    content: str | None = None
+    title: str | None = Field(default=None,min_length=1,max_length=100)
+    content: str | None = Field(default=None,min_length=1,max_length=1000)
+    is_favorite: bool | None = None
 
 class Token(BaseModel):
     access_token: str
