@@ -17,7 +17,7 @@ def get_notes(db,current_user,limit,skip,is_favorite = None,search = None,sort =
         }
     }
 
-def get_note(note_id,db,current_user):
+def get_note(db,note_id,current_user):
     note = crud.get_note(db, note_id,current_user.id)
     if note is None:
         raise HTTPException(status_code=404, detail="Note not found")
