@@ -28,6 +28,11 @@ def get_notes(
     return note_service.get_notes(db,current_user,limit,skip,is_favorite,search,sort,date_from,date_to)
 
 
+@router.get("/notes/{note_id}",response_model=NoteResponse)
+def get_note(note_id:int,db:Session = Depends(get_db),current_user = Depends(get_current_user)):
+    return note_service.get_note(db,note_id,current_user)
+
+
 @router.patch("/notes/{note_id}",response_model=NoteUpdate)
 def edit_notes(note_id:int,note_data:NoteUpdate,db:Session = Depends(get_db),current_user = Depends(get_current_user)):
     return note_service.update_note(db,note_id,note_data,current_user)
