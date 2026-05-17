@@ -62,3 +62,43 @@ def test_create_note():
         headers={"Authorization": f"Bearer {token}"}
     )
     assert response.status_code == 200
+
+def test_create_note_unauthorized():
+    response = client.post(
+        "/notes",
+        json = {
+            "title": "New Note",
+            "content": "New Note",
+        }
+    )
+    assert response.status_code == 401
+
+
+def test_create_note_validation():
+    username = f"user_{uuid.uuid4().hex[:8]}"
+
+    client.post(
+        "/register",
+        json = {
+            "username": username,
+            "password": "12345",
+        }
+    )
+
+    login_response = client.post(
+        "/token",
+        data = {
+            "username": username,
+            "password": "12345",
+        }
+    )
+    token = login_response.json()["access_token"]
+    response = client.post(
+        "/notes",
+        json = {
+            "title": "",
+            "content": "New Note",
+        },
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 422
