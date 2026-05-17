@@ -8,7 +8,7 @@ from schemas import UserCreate,RefreshRequest
 from security import hash_password
 from fastapi.security import OAuth2PasswordRequestForm
 from models import RefreshToken
-
+from logger_config import logger
 
 router = APIRouter()
 
@@ -16,9 +16,11 @@ router = APIRouter()
 def register(user:UserCreate,db:Session = Depends(get_db)):
     db_user = crud.get_user_by_username(db, username=user.username)
     if db_user:
+        logger.warning(f"User {user.username} already registered")
         raise HTTPException(status_code=400,detail="User already exists")
     hashed_password = hash_password(user.password)
     new_user = crud.create_user(db,user.username,hashed_password)
+    logger.info(f"User {user.username} created")
     return new_user
 
 
@@ -46,14 +48,17 @@ def refresh(data:RefreshRequest,db:Session = Depends(get_db)):
 def login(form_data:OAuth2PasswordRequestForm = Depends(),db:Session = Depends(get_db)):
     db_user = crud.get_user_by_username(db, username=form_data.username)
     if not db_user:
+        logger.warning(f"User {form_data.username} not logged in")
         raise HTTPException(status_code=401,detail="Incorrect username or password")
     if not verify_password(form_data.password, db_user.password):
+        logger.warning(f"User {form_data.username} not logged in")
         raise HTTPException(status_code=401,detail="Incorrect username or password")
     access_token = create_access_token(data={"sub": db_user.username})
     refresh_token = create_refresh_token(data={"sub": db_user.username})
     db_token = RefreshToken(token = refresh_token,user_id=db_user.id)
     db.add(db_token)
     db.commit()
+    logger.info(f"User {db_user.username} logged in")
     return {"access_token":access_token,"refresh_token":refresh_token ,"token_type":"bearer"}
 
 
@@ -61,7 +66,9 @@ def login(form_data:OAuth2PasswordRequestForm = Depends(),db:Session = Depends(g
 def logout(data:RefreshRequest,db:Session = Depends(get_db)):
     db_token=db.query(RefreshToken).filter(RefreshToken.token == data.refresh_token).first()
     if not db_token:
+        logger.warning(f"Invalid refresh token")
         raise HTTPException(status_code=401,detail="Incorrect username or password")
     db.delete(db_token)
     db.commit()
+    logger.info(f"User logged out")
     return {"message":"You have been logged out"}

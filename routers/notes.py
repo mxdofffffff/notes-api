@@ -1,15 +1,16 @@
 from fastapi import APIRouter,Depends,HTTPException,Query
-import crud
 from schemas import NoteResponse, NoteUpdate,NoteCreate,NoteListResponse
 from security import get_db
 from sqlalchemy.orm import Session
 from security import get_current_user
 from services import note_service
 from datetime import datetime
+from logger_config import logger
 router = APIRouter()
 
 @router.post("/notes",response_model=NoteResponse)
 def create_note(note:NoteCreate,db:Session = Depends(get_db),current_user = Depends(get_current_user)):
+    logger.info(f"Creating note {note.title}")
     return note_service.create_note(db,note,current_user)
 
 
@@ -35,14 +36,17 @@ def get_note(note_id:int,db:Session = Depends(get_db),current_user = Depends(get
 
 @router.patch("/notes/{note_id}",response_model=NoteUpdate)
 def edit_notes(note_id:int,note_data:NoteUpdate,db:Session = Depends(get_db),current_user = Depends(get_current_user)):
+    logger.info(f"Updating note {note_id}")
     return note_service.update_note(db,note_id,note_data,current_user)
 
 @router.delete("/notes/{note_id}")
 def delete_note(note_id:int,db:Session = Depends(get_db),current_user = Depends(get_current_user)):
+    logger.info(f"Deleting note {note_id}")
     return note_service.delete_note(db,note_id,current_user)
 
 @router.post("/notes/{note_id}/restore",response_model=NoteResponse)
 def restore_note(note_id:int,db:Session = Depends(get_db),current_user = Depends(get_current_user)):
+    logger.info(f"Restoring note {note_id}")
     return note_service.restore_note(db,note_id,current_user)
 
 @router.get("/notes/deleted",response_model=list[NoteResponse])
