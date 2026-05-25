@@ -46,3 +46,15 @@ def get_deleted_notes(db,current_user):
     if notes is None:
         raise HTTPException(status_code=404, detail="Notes not found")
     return notes
+
+def add_tags_to_note(db,note_id,tag_id,current_user):
+    result = crud.add_tags_to_note(db,note_id,tag_id,current_user.id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Tag not found")
+    return result
+
+def delete_tag_from_note(db,note_id,tag_id,current_user):
+    result = crud.delete_tag_from_note(db, note_id, tag_id, current_user.id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Note or tag not found")
+    return {"message":"tag deleted successfully"}

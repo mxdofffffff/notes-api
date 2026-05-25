@@ -101,3 +101,25 @@ def create_tag(db:Session, tag:TagCreate):
     db.commit()
     db.refresh(db_tag)
     return db_tag
+
+def add_tags_to_note(db:Session, note_id:int, tag_id:int,user_id:int):
+    note = db.query(Note).filter(Note.id == note_id,Note.user_id == user_id,Note.is_deleted == False).first()
+    tag = db.query(Tag).filter(Tag.id == tag_id).first()
+    if not note or not tag:
+        return None
+    if tag not in note.tags:
+        note.tags.append(tag)
+    db.commit()
+    db.refresh(note)
+    return note
+
+def delete_tag_from_note(db:Session,note_id:int,tag_id:int,user_id:int):
+    note = db.query(Note).filter(Note.id == note_id, Note.user_id == user_id, Note.is_deleted == False).first()
+    tag = db.query(Tag).filter(Tag.id == tag_id).first()
+    if not note or not tag:
+        return None
+    if tag in note.tags:
+        note.tags.remove(tag)
+    db.commit()
+    db.refresh(note)
+    return note

@@ -55,7 +55,14 @@ def restore_note(note_id:int,db:Session = Depends(get_db),current_user = Depends
 def get_deleted_notes(db:Session = Depends(get_db),current_user = Depends(get_current_user)):
     return note_service.get_deleted_notes(db,current_user)
 
-
 @router.post("/tags",response_model=TagResponse)
 def create_tag(tag:TagCreate,db:Session = Depends(get_db)):
     return crud.create_tag(db,tag)
+
+@router.post("/notes/{note_id}/tags/{tag_id}",response_model = NoteResponse)
+def add_tags_to_note(note_id:int,tag_id:int,db:Session = Depends(get_db),current_user = Depends(get_current_user)):
+    return note_service.add_tags_to_note(db,note_id,tag_id,current_user)
+
+@router.delete("/notes/{note_id}/tags/{tag_id}")
+def delete_tag_from_note(note_id:int,tag_id:int,db:Session = Depends(get_db),current_user = Depends(get_current_user)):
+    return note_service.delete_tag_from_note(db,note_id,tag_id,current_user)
