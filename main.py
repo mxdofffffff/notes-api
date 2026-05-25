@@ -3,9 +3,9 @@ from fastapi import FastAPI,Request
 from database import engine,Base
 from routers import notes, auth
 from fastapi.exceptions import HTTPException
-
+import models
 app = FastAPI()
-
+Base.metadata.create_all(bind = engine)
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request,exc: HTTPException):
     return JSONResponse(

@@ -1,5 +1,7 @@
 from fastapi import APIRouter,Depends,HTTPException,Query
-from schemas import NoteResponse, NoteUpdate,NoteCreate,NoteListResponse
+from sqlalchemy.sql.functions import current_user
+import crud
+from schemas import NoteResponse, NoteUpdate, NoteCreate, NoteListResponse, TagResponse, TagCreate
 from security import get_db
 from sqlalchemy.orm import Session
 from security import get_current_user
@@ -52,3 +54,8 @@ def restore_note(note_id:int,db:Session = Depends(get_db),current_user = Depends
 @router.get("/notes/deleted",response_model=list[NoteResponse])
 def get_deleted_notes(db:Session = Depends(get_db),current_user = Depends(get_current_user)):
     return note_service.get_deleted_notes(db,current_user)
+
+
+@router.post("/tags",response_model=TagResponse)
+def create_tag(tag:TagCreate,db:Session = Depends(get_db)):
+    return crud.create_tag(db,tag)

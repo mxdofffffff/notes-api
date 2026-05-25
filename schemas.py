@@ -51,3 +51,14 @@ class Token(BaseModel):
 
 class RefreshRequest(BaseModel):
     refresh_token: str
+
+
+class TagCreate(BaseModel):
+    name: str
+
+class TagResponse(BaseModel):
+    id: int
+    name: str
+
+    class Config:
+        from_attributes = True

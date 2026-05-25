@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from models import User,Note
-from schemas import NoteUpdate
+from models import User,Note,Tag
+from schemas import NoteUpdate, TagCreate
 
 
 def get_user_by_username(db:Session, username: str):
@@ -94,3 +94,10 @@ def get_deleted_notes(db:Session,user_id:int):
     if note is None:
         return None
     return note
+
+def create_tag(db:Session, tag:TagCreate):
+    db_tag = Tag(name=tag.name)
+    db.add(db_tag)
+    db.commit()
+    db.refresh(db_tag)
+    return db_tag
