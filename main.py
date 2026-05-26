@@ -3,7 +3,9 @@ from fastapi import FastAPI,Request
 from database import engine,Base
 from routers import notes, auth
 from fastapi.exceptions import HTTPException
-import models
+import time
+from fastapi import Request
+
 app = FastAPI()
 Base.metadata.create_all(bind = engine)
 @app.exception_handler(HTTPException)
@@ -17,6 +19,19 @@ async def http_exception_handler(request: Request,exc: HTTPException):
             }
         }
     )
+
+@app.middleware("http")
+async def log_requests(request: Request,call_next):
+    start_time = time.time()
+    response = await call_next(request)
+    process_time = time.time() - start_time
+    print (
+        f"{request.method} {request.url.path} "
+        f"{response.status_code} "
+        f"Took {process_time:.4f} seconds"
+    )
+    return response
+
 
 app.include_router(notes.router)
 app.include_router(auth.router)
