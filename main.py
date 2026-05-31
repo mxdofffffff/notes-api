@@ -5,6 +5,7 @@ from routers import notes, auth
 from fastapi.exceptions import HTTPException
 import time
 from fastapi import Request
+import asyncio
 
 app = FastAPI()
 Base.metadata.create_all(bind = engine)
@@ -32,6 +33,15 @@ async def log_requests(request: Request,call_next):
     )
     return response
 
+@app.get("/async-test")
+async def async_test():
+    await asyncio.sleep(5)
+    return {"message":"ok"}
+
+@app.get("/sync-test")
+async def sync_test():
+    time.sleep(5)
+    return {"message":"okay"}
 
 app.include_router(notes.router)
 app.include_router(auth.router)
