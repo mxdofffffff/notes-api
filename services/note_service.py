@@ -50,3 +50,21 @@ def get_deleted_notes(db,current_user):
 def create_category(db,category,current_user):
     category = crud.create_category(db, category.name, current_user.id)
     return category
+
+def get_category(db,category_id,current_user):
+    category = crud.get_category(db, category_id, current_user.id)
+    if category is None:
+        raise HTTPException(status_code=404, detail="Category not found")
+    return category
+
+def get_categories(db,current_user):
+    categories = crud.get_categories(db, current_user.id)
+    if categories is None:
+        raise HTTPException(status_code=404, detail="Categories not found")
+    return categories
+
+def delete_category(db,category_id,current_user):
+    category = crud.delete_category(db, category_id, current_user.id)
+    if category is None:
+        raise HTTPException(status_code=404, detail="Category not found")
+    return {"message":"Category deleted successfully"}

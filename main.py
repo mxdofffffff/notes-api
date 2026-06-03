@@ -5,10 +5,9 @@ from routers import notes, auth
 from fastapi.exceptions import HTTPException
 import time
 from fastapi import Request
-import asyncio
 
 app = FastAPI()
-Base.metadata.create_all(bind = engine)
+
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request,exc: HTTPException):
     return JSONResponse(

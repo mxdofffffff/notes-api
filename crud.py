@@ -109,8 +109,8 @@ def get_category(db:Session, category_id:int , user_id : int):
         return None
     return db_category
 
-def get_categories(db:Session, category_id:int):
-    db_category = db.query(Category).filter(Category.user_id == user.id).all()
+def get_categories(db:Session, user_id:int):
+    db_category = db.query(Category).filter(Category.user_id == user_id).all()
     if db_category is None:
         return None
     return db_category
