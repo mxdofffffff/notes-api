@@ -1,6 +1,6 @@
 # 📝 Notes API
 
-REST API для управления заметками с авторизацией, тегами и фильтрацией.
+REST API для управления заметками с авторизацией, категориями и фильтрацией.
 
 ## Стек
 
@@ -17,24 +17,24 @@ REST API для управления заметками с авторизаци�
 
 1. Клонируй репозиторий:
 ```bash
-   git clone https://github.com/mxdofffffff/notes-api.git
-   cd notes-api
+git clone https://github.com/mxdofffffff/notes-api.git
+cd notes-api
 ```
 
 2. Создай `.env` файл:
 ```env
-   SECRET_KEY=your_secret_key
-   DATABASE_URL=postgresql://postgres:postgres@db:5432/notes_db
+SECRET_KEY=your_secret_key
+DATABASE_URL=postgresql://postgres:postgres@db:5432/notes_db
 ```
 
 3. Запусти:
 ```bash
-   docker-compose up --build
+docker-compose up --build
 ```
 
 4. Примени миграции:
 ```bash
-   docker-compose exec web alembic upgrade head
+docker-compose exec web alembic upgrade head
 ```
 
 5. API доступно по адресу: `http://localhost:8000`
@@ -61,12 +61,14 @@ REST API для управления заметками с авторизаци�
 | POST | `/notes/{id}/restore` | Восстановить удалённую заметку |
 | GET | `/notes/deleted` | Список удалённых заметок |
 
-### Теги
+### Категории
 | Метод | URL | Описание |
 |-------|-----|----------|
-| POST | `/tags` | Создать тег |
-| POST | `/notes/{id}/tags/{tag_id}` | Добавить тег к заметке |
-| DELETE | `/notes/{id}/tags/{tag_id}` | Удалить тег с заметки |
+| POST | `/categories` | Создать категорию |
+| GET | `/categories` | Список категорий |
+| GET | `/categories/{id}` | Получить категорию по ID |
+| GET | `/categories/{id}/notes` | Заметки внутри категории |
+| DELETE | `/categories/{id}` | Удалить категорию |
 
 ## Фильтрация заметок
 
