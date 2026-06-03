@@ -3,7 +3,7 @@ from fastapi import HTTPException
 
 
 def create_note(db,note_data,current_user):
-    return crud.create_note(db,note_data.title,note_data.content,current_user.id)
+    return crud.create_note(db,note_data.title,note_data.content,current_user.id,note_data.category_id)
 
 def get_notes(db,current_user,limit,skip,is_favorite = None,search = None,sort = None,date_from = None,date_to = None):
     items,total= crud.get_notes_by_user(db,current_user.id,limit,skip,is_favorite,search,sort,date_from,date_to)
@@ -47,14 +47,6 @@ def get_deleted_notes(db,current_user):
         raise HTTPException(status_code=404, detail="Notes not found")
     return notes
 
-def add_tags_to_note(db,note_id,tag_id,current_user):
-    result = crud.add_tags_to_note(db,note_id,tag_id,current_user.id)
-    if not result:
-        raise HTTPException(status_code=404, detail="Tag not found")
-    return result
-
-def delete_tag_from_note(db,note_id,tag_id,current_user):
-    result = crud.delete_tag_from_note(db, note_id, tag_id, current_user.id)
-    if not result:
-        raise HTTPException(status_code=404, detail="Note or tag not found")
-    return {"message":"tag deleted successfully"}
+def create_category(db,category,current_user):
+    category = crud.create_category(db, category.name, current_user.id)
+    return category

@@ -1,7 +1,5 @@
 from fastapi import APIRouter,Depends,HTTPException,Query
-from sqlalchemy.sql.functions import current_user
-import crud
-from schemas import NoteResponse, NoteUpdate, NoteCreate, NoteListResponse, TagResponse, TagCreate
+from schemas import NoteResponse, NoteUpdate, NoteCreate, NoteListResponse, CategoryResponse, CategoryCreate
 from security import get_db
 from sqlalchemy.orm import Session
 from security import get_current_user
@@ -11,7 +9,7 @@ from logger_config import logger
 router = APIRouter()
 
 @router.post("/notes",response_model=NoteResponse)
-def create_note(note:NoteCreate,db:Session = Depends(get_db),current_user = Depends(get_current_user)):
+def create_note(note:NoteCreate,db:Session = Depends(get_db),current_user = Depends(get_current_user) ):
     logger.info(f"Creating note {note.title}")
     return note_service.create_note(db,note,current_user)
 
@@ -55,14 +53,6 @@ def restore_note(note_id:int,db:Session = Depends(get_db),current_user = Depends
 def get_deleted_notes(db:Session = Depends(get_db),current_user = Depends(get_current_user)):
     return note_service.get_deleted_notes(db,current_user)
 
-@router.post("/tags",response_model=TagResponse)
-def create_tag(tag:TagCreate,db:Session = Depends(get_db)):
-    return crud.create_tag(db,tag)
-
-@router.post("/notes/{note_id}/tags/{tag_id}",response_model = NoteResponse)
-def add_tags_to_note(note_id:int,tag_id:int,db:Session = Depends(get_db),current_user = Depends(get_current_user)):
-    return note_service.add_tags_to_note(db,note_id,tag_id,current_user)
-
-@router.delete("/notes/{note_id}/tags/{tag_id}")
-def delete_tag_from_note(note_id:int,tag_id:int,db:Session = Depends(get_db),current_user = Depends(get_current_user)):
-    return note_service.delete_tag_from_note(db,note_id,tag_id,current_user)
+@router.post("/category", response_model=CategoryResponse)
+def create_category(category: CategoryCreate, db:Session = Depends(get_db), current_user = Depends(get_current_user)):
+    return note_service.create_category(db,category,current_user)

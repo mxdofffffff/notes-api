@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv(".env.test", override=True)
+
 from fastapi.testclient  import TestClient
 from main import app
 from database import Base, engine
@@ -83,7 +86,7 @@ def test_create_note(auth_client):
         },
         headers={"Authorization": f"Bearer {token}"}
     )
-    assert response.status_code == 200
+    assert response.status_code == 200 , response.json()
 
 def test_create_note_unauthorized():
     response = client.post(
@@ -124,20 +127,6 @@ def test_create_note_validation():
         headers={"Authorization": f"Bearer {token}"}
     )
     assert response.status_code == 422
-
-
-def test_add_tag_to_note(note):
-    note_id,headers = note
-    tag_response = client.post(
-        "/tags",
-        json = {
-            "name": "New Tag",
-        },
-    )
-    tag_id = tag_response.json()["id"]
-    response = client.post(f"/notes/{note_id}/tags/{tag_id}",headers = headers)
-    assert response.status_code == 200
-
 
 
 def test_delete_note(note):

@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from models import User,Note,Tag
-from schemas import NoteUpdate, TagCreate
+from models import User,Note,Category
+from schemas import NoteUpdate
 
 
 def get_user_by_username(db:Session, username: str):
@@ -15,8 +15,8 @@ def create_user(db:Session, username: str, hashed_password: str):
     db.refresh(new_user)
     return new_user
 
-def create_note(db:Session, title: str, content: str,user_id:int):
-    new_note = Note(title=title, content=content, user_id=user_id , is_favorite = False)
+def create_note(db:Session, title: str, content: str | None ,user_id:int, category_id: int | None):
+    new_note = Note(title=title, content=content, user_id=user_id, category_id = category_id , is_favorite = False)
     db.add(new_note)
     db.commit()
     db.refresh(new_note)
@@ -32,6 +32,8 @@ def edit_note(db:Session, note_id:int, note_data:NoteUpdate,user_id:int):
         db_note.content = note_data.content
     if note_data.is_favorite is not None:
        db_note.is_favorite = note_data.is_favorite
+    if "category_id" in note_data.model_fields_set:
+        db_note.category_id = note_data.category_id
     db.commit()
     db.refresh(db_note)
     return db_note
@@ -80,7 +82,6 @@ def delete_note(db:Session,note_id:int,user_id:int):
     db.commit()
     return note
 
-
 def restore_note(db:Session,note_id:int,user_id:int):
     note = db.query(Note).filter(Note.id == note_id,Note.user_id==user_id,Note.is_deleted == True).first()
     if note is None:
@@ -95,31 +96,29 @@ def get_deleted_notes(db:Session,user_id:int):
         return None
     return note
 
-def create_tag(db:Session, tag:TagCreate):
-    db_tag = Tag(name=tag.name)
-    db.add(db_tag)
+def create_category(db:Session, name: str, user_id:int):
+    new_category = Category(name=name, user_id=user_id)
+    db.add(new_category)
     db.commit()
-    db.refresh(db_tag)
-    return db_tag
+    db.refresh(new_category)
+    return new_category
 
-def add_tags_to_note(db:Session, note_id:int, tag_id:int,user_id:int):
-    note = db.query(Note).filter(Note.id == note_id,Note.user_id == user_id,Note.is_deleted == False).first()
-    tag = db.query(Tag).filter(Tag.id == tag_id).first()
-    if not note or not tag:
+def get_category(db:Session, category_id:int , user_id : int):
+    db_category = db.query(Category).filter(Category.id == category_id, Category.user_id == user_id).first()
+    if db_category is None:
         return None
-    if tag not in note.tags:
-        note.tags.append(tag)
-    db.commit()
-    db.refresh(note)
-    return note
+    return db_category
 
-def delete_tag_from_note(db:Session,note_id:int,tag_id:int,user_id:int):
-    note = db.query(Note).filter(Note.id == note_id, Note.user_id == user_id, Note.is_deleted == False).first()
-    tag = db.query(Tag).filter(Tag.id == tag_id).first()
-    if not note or not tag:
+def get_categories(db:Session, category_id:int):
+    db_category = db.query(Category).filter(Category.user_id == user.id).all()
+    if db_category is None:
         return None
-    if tag in note.tags:
-        note.tags.remove(tag)
+    return db_category
+
+def delete_category(db:Session, category_id:int,user_id:int):
+    db_category = db.query(Category).filter(Category.id == category_id, Category.user_id == user_id).first()
+    if db_category is None:
+        return None
+    db.delete(db_category)
     db.commit()
-    db.refresh(note)
-    return note
+    return db_category

@@ -4,24 +4,21 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 from sqlalchemy import Boolean
 
-note_tags = Table(
-    'note_tags',
-    Base.metadata,
-    Column('note_id',Integer,ForeignKey('notes.id')),
-    Column('tag_id',Integer,ForeignKey('tags.id'))
-)
 
-class Tag(Base):
-    __tablename__ = 'tags'
+class Category(Base):
+    __tablename__ = 'categories'
     id = Column(Integer,primary_key=True)
-    name = Column(String)
-    notes = relationship("Note", secondary = note_tags ,back_populates="tags")
+    name = Column(String,nullable = False)
+    user_id = Column(Integer, ForeignKey('users.id'))
+    owner = relationship("User", back_populates="categories")
+    notes = relationship("Note", back_populates="category")
 
 class User(Base):
     __tablename__ = 'users'
     id=Column(Integer,primary_key=True)
     username = Column(String,unique=True,nullable=False)
     password = Column(String,nullable=False)
+    categories = relationship("Category",back_populates="owner")
     notes = relationship("Note", back_populates="owner")
 
 class Note(Base):
@@ -30,8 +27,9 @@ class Note(Base):
     title = Column(String)
     content = Column(String)
     user_id = Column(Integer, ForeignKey('users.id'))
+    category_id = Column(Integer, ForeignKey('categories.id'))
     owner = relationship("User", back_populates="notes")
-    tags = relationship("Tag", secondary = note_tags ,back_populates="notes")
+    category = relationship("Category",back_populates="notes")
     created_at = Column(DateTime,default=datetime.utcnow)
     is_deleted = Column(Boolean,default=False)
     is_favorite = Column(Boolean,nullable = False,default = False)

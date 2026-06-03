@@ -13,18 +13,20 @@ class UserResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class CategoryCreate(BaseModel):
+    name: str = Field(min_length=1,max_length=100)
 
+class CategoryResponse(BaseModel):
+    id: int
+    name: str
+    class Config:
+        from_attributes = True
 
 class NoteCreate(BaseModel):
     title: str = Field(min_length=1, max_length=100)
     content: str = Field(min_length=1, max_length=1000)
+    category_id: int | None = None
 
-class TagResponse(BaseModel):
-    id: int
-    name: str
-
-    class Config:
-        from_attributes = True
 
 class NoteResponse(BaseModel):
     id: int
@@ -32,7 +34,7 @@ class NoteResponse(BaseModel):
     content: str
     user_id: int
     is_favorite: bool | None
-    tags: list[TagResponse] = []
+    category: CategoryResponse | None = None
     class Config:
         from_attributes = True
 
@@ -50,6 +52,7 @@ class NoteUpdate(BaseModel):
     title: str | None = Field(default=None,min_length=1,max_length=100)
     content: str | None = Field(default=None,min_length=1,max_length=1000)
     is_favorite: bool | None = None
+    category_id: int | None = None
 
 class Token(BaseModel):
     access_token: str
@@ -59,5 +62,3 @@ class Token(BaseModel):
 class RefreshRequest(BaseModel):
     refresh_token: str
 
-class TagCreate(BaseModel):
-    name: str
