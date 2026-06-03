@@ -53,7 +53,7 @@ def restore_note(note_id:int,db:Session = Depends(get_db),current_user = Depends
 def get_deleted_notes(db:Session = Depends(get_db),current_user = Depends(get_current_user)):
     return note_service.get_deleted_notes(db,current_user)
 
-@router.post("/category", response_model=CategoryResponse)
+@router.post("/categories", response_model=CategoryResponse)
 def create_category(category: CategoryCreate, db:Session = Depends(get_db), current_user = Depends(get_current_user)):
     return note_service.create_category(db,category,current_user)
 
@@ -68,3 +68,7 @@ def get_categories(db:Session = Depends(get_db),current_user = Depends(get_curre
 @router.delete("/categories/{category_id}")
 def delete_category(category_id:int , db:Session = Depends(get_db), current_user = Depends(get_current_user)):
     return note_service.delete_category(db,category_id,current_user)
+
+@router.get("/categories/{category_id}/notes",response_model=list[NoteResponse])
+def get_notes_by_category(category_id: int, db:Session = Depends(get_db),current_user = Depends(get_current_user)):
+    return note_service.get_notes_by_category(db,category_id,current_user)

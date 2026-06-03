@@ -68,3 +68,9 @@ def delete_category(db,category_id,current_user):
     if category is None:
         raise HTTPException(status_code=404, detail="Category not found")
     return {"message":"Category deleted successfully"}
+
+def get_notes_by_category(db,category_id,current_user):
+    notes = crud.get_notes_by_category(db, category_id, current_user.id)
+    if notes is None:
+        raise HTTPException(status_code=404, detail="Notes not found")
+    return notes

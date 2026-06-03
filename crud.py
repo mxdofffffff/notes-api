@@ -122,3 +122,9 @@ def delete_category(db:Session, category_id:int,user_id:int):
     db.delete(db_category)
     db.commit()
     return db_category
+
+def get_notes_by_category(db:Session, category_id:int,user_id:int):
+    db_category = db.query(Note).filter(Note.category_id == category_id, Category.user_id == user_id, Note.is_deleted == False).all()
+    if db_category is None:
+        return None
+    return db_category
