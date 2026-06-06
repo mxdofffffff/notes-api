@@ -23,6 +23,14 @@ services:
     ports:
       - "8000:8000"
 
+  bot:
+    build: .
+    depends_on:
+      - web
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - API_URL=http://web:8000
+    command: python bot.py
 
 volumes:
   postgres_data:

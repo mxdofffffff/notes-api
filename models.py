@@ -39,3 +39,10 @@ class RefreshToken(Base):
     id = Column(Integer,primary_key=True)
     token = Column(String,unique=True,nullable=False)
     user_id = Column(Integer, ForeignKey('users.id'))
+
+
+class BotSession(Base):
+    __tablename__ = 'bot_sessions'
+    id = Column(Integer,primary_key=True)
+    telegram_id = Column(Integer, unique=True, nullable=False)
+    refresh_token = Column(String,nullable=False)
