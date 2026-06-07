@@ -24,6 +24,24 @@ def get_db():
     finally:
         db.close()
 
+async def get_access_token(telegram_id:int):
+    if telegram_id in user_tokens:
+        return user_tokens[telegram_id]
+    db=SessionLocal()
+    try:
+        session = db.query(BotSession).filter(BotSession.telegram_id == telegram_id).first()
+        if session is None:
+            return None
+        async with httpx.AsyncClient() as client:
+            response = await client.post(f"{API_URL}/refresh",json = {"access_token": session.refresh_token})
+        if response.status_code != 200:
+            return None
+        access_token = response.json()["access_token"]
+        user_tokens[telegram_id] = access_token
+        return access_token
+    finally:
+        db.close()
+
 
 @dp.message(Command("start"))
 async def start(message: Message):
@@ -38,6 +56,162 @@ async def start(message: Message):
         "/add <category_id> <заметка> — добавить заметку\n"
         "/delete <note_id> — удалить заметку\n"
     )
+
+
+@dp.message(Command("register"))
+async def register(message: Message):
+    parts = message.text.strip().split()
+    if len(parts) != 3:
+        await message.answer("Используй : /register <username> <password>")
+        return
+    _,username,password = parts
+    async with httpx.AsyncClient() as client:
+        response = await client.post(f"{API_URL}/register",json = {"username":username,"password":password})
+    if response.status_code == 200:
+        await message.answer(f"Пользователь {username} зарегистрирован. Теперь войди через /login")
+    elif response.status_code == 400:
+        await message.answer("❌ Пользователь с таким именем уже существует")
+    else:
+        await message.answer("Ошибка регистрации")
+
+
+
+@dp.message(Command("login"))
+async def login(message: Message):
+    parts = message.text.strip().split()
+    if len(parts) != 3:
+        await message.answer("Используй : /login <username> <password>")
+        return
+    _,username,password = parts
+    async with httpx.AsyncClient() as client:
+        response = await client.post(f"{API_URL}/token",data = {"username":username,"password":password})
+    if response.status_code != 200:
+        await message.answer("Неверный логин или пароль")
+        return
+    access_token = response.json()["access_token"]
+    refresh_token = response.json()["refresh_token"]
+    user_tokens[message.from_user.id] = access_token
+    db=SessionLocal()
+    try:
+        session = db.query(BotSession).filter(BotSession.telegram_id == message.from_user.id).first()
+        if session:
+            session.refresh_token = refresh_token
+        else:
+            db.add(BotSession(telegram_id = message.from_user.id,refresh_token = refresh_token))
+        db.commit()
+    finally:
+        db.close()
+    await message.answer(f"Добро пожаловать {username}")
+
+
+@dp.message(Command("categories"))
+async def categories(message: Message):
+    token = await get_access_token(message.from_user.id)
+    if token is None:
+        await message.answer("Сначала войдите в аккаунт")
+        return
+    async with httpx.AsyncClient() as client:
+        response = await client.get(f"{API_URL}/categories",headers= {"Authorization":f"Bearer {token}"})
+    if response.status_code != 200:
+        await message.answer("Ошибка получения категорий")
+        return
+    data = response.json()
+    if data is None:
+        await message.answer("У вас пока нет категорий, Создай через /new_category <название>")
+        return
+    text = "Твои категории\n\n"
+    for category in data:
+        text +=f"{category['id']} {category['name']}\n"
+    await message.answer(text)
+
+
+
+@dp.message(Command("new_category"))
+async def new_category(message: Message):
+    parts = message.text.strip().split()
+    if len(parts) != 2:
+        await message.answer("Используй: /new_category <название>")
+        return
+    name = parts[1]
+    token = await get_access_token(message.from_user.id)
+    if token is None:
+        await message.answer("Сначала войдите в аккаунт")
+        return
+    async with httpx.AsyncClient() as client:
+        response = await client.post(f"{API_URL}/categories",json = {"name":name},headers= {"Authorization":f"Bearer {token}"})
+    if response.status_code == 200:
+        await message.answer("Категория успешно создана")
+    else:
+        await message.answer("Ошибка при создании категории")
+
+
+
+@dp.message(Command("notes"))
+async def notes(message: Message):
+    parts = message.text.strip().split()
+    if len(parts) != 2 or not parts[1].isdigit():
+        await message.answer("Используй: /notes <category_id>")
+        return
+    category_id = int(parts[1])
+    token = await get_access_token(message.from_user.id)
+    if token is None:
+        await message.answer("Сначала войдите в аккаунт")
+        return
+    async with httpx.AsyncClient() as client:
+        response = await client.get(f"{API_URL}/categories/{category_id}/notes",headers= {"Authorization":f"Bearer {token}"})
+    if response.status_code == 404:
+        await message.answer("Ошибка, категория не найдена")
+        return
+    data = response.json()
+    if not data:
+        await message.answer("В этой категории пока нет заметок. Добавь через /add")
+        return
+    text = "Заметки\n"
+    for notes in data:
+        text += f"{notes['id']} {notes['title']} \n"
+    await message.answer(text)
+
+
+@dp.message(Command("add"))
+async def add(message: Message):
+    parts = message.text.strip().split()
+    if len(parts) != 3 or not parts[1].isdigit():
+        await message.answer("Используй: /add <category_id> <заметка>")
+        return
+    category_id = int(parts[1])
+    title = parts[2]
+    token = get_access_token(message.from_user.id)
+    if not token:
+        await message.answer("Сначала войди через /login")
+        return
+    async with httpx.AsyncClient() as client:
+        response = await client.post(f"{API_URL}/notes",json = {"title": title, "category_id": category_id},headers= {"Authorization":f"Bearer {token}"})
+    if response.status_code == 200:
+        await message.answer(f"Заметка {title} успешно создана")
+    else:
+        await message.answer("Ошибка")
+
+
+@dp.message(Command("delete"))
+async def delete(message: Message):
+    parts = message.text.strip().split()
+    if len(parts) != 2 or not parts[1].isdigit():
+        await message.answer("Используй: /notes <category_id>")
+        return
+    _,note_id = parts
+    token = get_access_token(message.from_user.id)
+    if not token:
+        await message.answer("Сначала войдите в аккаунт")
+        return
+    async with httpx.AsyncClient() as client:
+        response = await client.delete(f"{API_URL}/notes/{note_id}",headers= {"Authorization":f"Bearer {token}"})
+    if response.status_code == 200:
+        await message.answer("Заметка удалена")
+    elif response.status_code == 404:
+        await message.answer("Заметка не найдена")
+    else:
+        await message.answer("Ошибка удаления")
+
 
 @dp.message()
 async def fallback(message: Message):
