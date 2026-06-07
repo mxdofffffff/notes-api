@@ -128,7 +128,7 @@ async def categories(message: Message):
 
 @dp.message(Command("new_category"))
 async def new_category(message: Message):
-    parts = message.text.strip().split()
+    parts = message.text.strip().split(maxsplit = 1)
     if len(parts) != 2:
         await message.answer("Используй: /new_category <название>")
         return
@@ -158,23 +158,32 @@ async def notes(message: Message):
         await message.answer("Сначала войдите в аккаунт")
         return
     async with httpx.AsyncClient() as client:
-        response = await client.get(f"{API_URL}/categories/{category_id}/notes",headers= {"Authorization":f"Bearer {token}"})
-    if response.status_code == 404:
-        await message.answer("Ошибка, категория не найдена")
-        return
+        category_response = await client.get(
+            f"{API_URL}/categories/{category_id}",
+            headers = {"Authorization":f"Bearer {token}"}
+        )
+        if category_response.status_code == 404:
+            await message.answer("Ошибка, категория не найдена")
+            return
+
+        response = await client.get(
+            f"{API_URL}/categories/{category_id}/notes",
+            headers= {"Authorization":f"Bearer {token}"}
+        )
+    category = category_response.json()
     data = response.json()
     if not data:
         await message.answer("В этой категории пока нет заметок. Добавь через /add")
         return
-    text = "Заметки\n"
+    text = f"|{category['name']}|\n"
     for notes in data:
         text += f"{notes['id']} {notes['title']} \n"
     await message.answer(text)
 
 
 @dp.message(Command("add"))
-async def add(message: Message):
-    parts = message.text.strip().split()
+async def add_note(message: Message):
+    parts = message.text.strip().split(maxsplit = 2)
     if len(parts) != 3 or not parts[1].isdigit():
         await message.answer("Используй: /add <category_id> <заметка>")
         return
@@ -185,7 +194,11 @@ async def add(message: Message):
         await message.answer("Сначала войди через /login")
         return
     async with httpx.AsyncClient() as client:
-        response = await client.post(f"{API_URL}/notes",json = {"title": title, "category_id": category_id},headers= {"Authorization":f"Bearer {token}"})
+        response = await client.post(
+            f"{API_URL}/notes",
+            json = {"title": title, "category_id": category_id},
+            headers= {"Authorization":f"Bearer {token}"}
+        )
     if response.status_code == 200:
         await message.answer(f"Заметка {title} успешно создана")
     else:
@@ -193,7 +206,7 @@ async def add(message: Message):
 
 
 @dp.message(Command("delete"))
-async def delete(message: Message):
+async def delete_note(message: Message):
     parts = message.text.strip().split()
     if len(parts) != 2 or not parts[1].isdigit():
         await message.answer("Используй: /notes <category_id>")
