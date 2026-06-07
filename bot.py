@@ -180,7 +180,7 @@ async def add(message: Message):
         return
     category_id = int(parts[1])
     title = parts[2]
-    token = get_access_token(message.from_user.id)
+    token = await get_access_token(message.from_user.id)
     if not token:
         await message.answer("Сначала войди через /login")
         return
@@ -199,7 +199,7 @@ async def delete(message: Message):
         await message.answer("Используй: /notes <category_id>")
         return
     _,note_id = parts
-    token = get_access_token(message.from_user.id)
+    token = await get_access_token(message.from_user.id)
     if not token:
         await message.answer("Сначала войдите в аккаунт")
         return
