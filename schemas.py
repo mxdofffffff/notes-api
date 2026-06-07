@@ -24,14 +24,14 @@ class CategoryResponse(BaseModel):
 
 class NoteCreate(BaseModel):
     title: str = Field(min_length=1, max_length=100)
-    content: str = Field(min_length=1, max_length=1000)
+    content: str | None = Field(default = None,min_length=1, max_length=1000)
     category_id: int | None = None
 
 
 class NoteResponse(BaseModel):
     id: int
     title: str
-    content: str
+    content: str | None = None
     user_id: int
     is_favorite: bool | None
     category: CategoryResponse | None = None

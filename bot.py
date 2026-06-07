@@ -202,7 +202,7 @@ async def add_note(message: Message):
     if response.status_code == 200:
         await message.answer(f"Заметка {title} успешно создана")
     else:
-        await message.answer("Ошибка")
+        await message.answer(f"Ошибка:{response.status_code()}")
 
 
 @dp.message(Command("delete"))

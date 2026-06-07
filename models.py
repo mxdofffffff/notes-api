@@ -1,4 +1,4 @@
-from sqlalchemy import Column,String,Integer,ForeignKey,DateTime,Table
+from sqlalchemy import Column,String,Integer,ForeignKey,DateTime,BigInteger
 from database import Base
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -44,5 +44,5 @@ class RefreshToken(Base):
 class BotSession(Base):
     __tablename__ = 'bot_sessions'
     id = Column(Integer,primary_key=True)
-    telegram_id = Column(Integer, unique=True, nullable=False)
+    telegram_id = Column(BigInteger, unique=True, nullable=False)
     refresh_token = Column(String,nullable=False)
