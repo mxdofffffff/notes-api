@@ -47,6 +47,14 @@ async def get_access_token(telegram_id:int):
     finally:
         db.close()
 
+class CategoryCallback(CallbackData,prefix = "cat"):
+    category_id: int
+
+class NoteAction(CallbackData,prefix = "note"):
+    action: str #add , delete , back
+    category_id: int
+
+
 async def render_category(category_id:int , headers: dict):
     async with httpx.AsyncClient() as client:
         category_response = await client.get(f"{API_URL}/categories/{category_id}",headers=headers)
@@ -76,12 +84,6 @@ async def render_category(category_id:int , headers: dict):
     return text, keyboard
 
 
-class CategoryCallback(CallbackData,prefix = "cat"):
-    category_id: int
-
-class NoteAction(CallbackData,prefix = "note"):
-    action: str #add , delete , back
-    category_id: int
 
 @dp.message(Command("start"))
 async def start(message: Message):
@@ -132,32 +134,7 @@ async def show_category_notes(callback: CallbackQuery,callback_data:CategoryCall
     if not token:
         return
     headers = {"Authorization":f"Bearer {token}"}
-    async with httpx.AsyncClient() as client:
-        category_response = await client.get(
-            f"{API_URL}/categories/{callback_data.category_id}",
-            headers=headers
-        )
-        notes_response = await client.get(
-            f"{API_URL}/categories/{callback_data.category_id}/notes",
-            headers=headers
-        )
-    categories = category_response.json()
-    notes = notes_response.json()
-    if not notes:
-        text = f"{categories['name']}\n\nНет заметок"
-    else:
-        text = f"{categories['name']}\n\n"
-        for note in notes:
-            text += f"{note['id']}: {note['title']}\n"
-    keyboard = InlineKeyboardMarkup(inline_keyboard = [
-        [
-        InlineKeyboardButton(text = "Добавить",callback_data = NoteAction(action = "add",category_id = callback_data.category_id).pack()),
-        InlineKeyboardButton(text = "Удалить",callback_data = NoteAction(action="delete",category_id = callback_data.category_id).pack()),
-        ],
-        [
-            InlineKeyboardButton(text = "Назад",callback_data = NoteAction(action = "back",category_id = callback_data.category_id).pack()),
-        ]
-    ])
+    text,keyboard = await render_category(callback_data.category_id,headers)
     await callback.message.edit_text(text,reply_markup = keyboard)
     await callback.answer()
 
@@ -191,6 +168,7 @@ async def show_notes(callback: CallbackQuery, callback_data: NoteAction, state: 
         await state.set_state("waiting_note_title")
 
     elif callback_data.action == "delete":
+        await state.set_data({"category_id":callback_data.category_id})
         await callback.message.answer("Напиши ID заметки которую хочешь удалить")
         await state.set_state("waiting_note_delete")
 
@@ -392,6 +370,8 @@ async def receive_note_title(message: Message, state: FSMContext):
         await message.answer("Ошибка")
     await state.clear()
 
+    text,keyboard = await render_category(category_id,headers)
+    await message.answer(text,reply_markup=keyboard)
 
 
 @dp.message(StateFilter("waiting_note_delete"))
@@ -400,16 +380,19 @@ async def receive_note_delete(message: Message, state: FSMContext):
         await message.answer("Это не похоже на ID. Введи число.")
         return
 
+    data = await state.get_data()
     note_id = int(message.text)
+    category_id = data["category_id"]
     token = await get_access_token(message.from_user.id)
     if not token:
         await message.answer("Сначала войди через /login")
         await state.clear()
         return
+    headers = {"Authorization":f"Bearer {token}"}
     async with httpx.AsyncClient() as client:
         response = await client.delete(
             f"{API_URL}/notes/{note_id}",
-            headers = {"Authorization":f"Bearer {token}"}
+            headers = headers
         )
         if response.status_code == 200:
             await message.answer("Заметка успешно удалена")
@@ -417,7 +400,11 @@ async def receive_note_delete(message: Message, state: FSMContext):
             await message.answer("Заметка не найдена")
         else:
             await message.answer("Ошибка")
+            return
     await state.clear()
+
+    text, keyboard = await render_category(category_id, headers)
+    await message.answer(text, reply_markup=keyboard)
 
 
 @dp.message()
