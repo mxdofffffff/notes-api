@@ -11,6 +11,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.filters.callback_data import CallbackData
+from aiogram.types import CallbackQuery
 
 load_dotenv()
 
@@ -46,7 +47,12 @@ async def get_access_token(telegram_id:int):
     finally:
         db.close()
 
+
 class CategoryCallback(CallbackData,prefix = "cat"):
+    category_id: int
+
+class NoteAction(CallbackData,prefix = "note"):
+    action: str #add , delete , back
     category_id: int
 
 @dp.message(Command("start"))
@@ -90,6 +96,42 @@ async def start(message: Message):
     keyboard = InlineKeyboardMarkup(inline_keyboard = buttons)
     await message.answer("Твои категории:", reply_markup = keyboard)
 
+
+
+@dp.callback_query(CategoryCallback.filter())
+async def show_category_notes(callback: CallbackQuery,callback_data:CategoryCallback):
+    token = await get_access_token(callback.from_user.id)
+    headers = {"Authorization":f"Bearer {token}"}
+    if not token:
+        return
+    async with httpx.AsyncClient() as client:
+        category_response = await client.get(
+            f"{API_URL}/categories/{callback_data.category_id}",
+            headers=headers
+        )
+        notes_response = await client.get(
+            f"{API_URL}/categories/{callback_data.category_id}/notes",
+            headers=headers
+        )
+    categories = category_response.json()
+    notes = notes_response.json()
+    if not notes:
+        text = f"{categories['name']}\n\nНет заметок"
+    else:
+        text = f"{categories['name']}\n\n"
+        for note in notes:
+            text += f"{note['title']}\n\n"
+    keyboard = InlineKeyboardMarkup(inline_keyboard = [
+        [
+        InlineKeyboardButton(text = "Добавить",callback_data = NoteAction(action = "add",category_id = callback_data.category_id).pack()),
+        InlineKeyboardButton(text = "Удалить",callback_data = NoteAction(action="delete",category_Id = callback_data.category_id).pack()),
+        ],
+        [
+            InlineKeyboardButton(text = "Назад",callback_data = NoteAction(action = "back",category_id = callback_data.category_id).pack()),
+        ]
+    ])
+    await callback.message.edit_text(text,reply_markup = keyboard)
+    await callback.answer()
 
 @dp.message(Command("register"))
 async def register(message: Message):
