@@ -89,3 +89,19 @@ docker-compose exec web alembic upgrade head
 ```bash
 pytest
 ```
+
+## Деплой
+
+Проект задеплоен на Railway.
+
+- **API:** https://notes-api-production-066e.up.railway.app
+- **Swagger документация:** https://notes-api-production-066e.up.railway.app/docs
+- **Telegram бот:** @APINotes_bot
+
+## Архитектура
+
+Проект состоит из трёх сервисов задеплоенных на Railway:
+
+- **notes-api** — FastAPI бэкенд
+- **bot** — Telegram бот на aiogram 3.x
+- **PostgreSQL** — база данных
