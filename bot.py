@@ -4,7 +4,7 @@ import httpx
 from aiogram import Bot, Dispatcher
 from dotenv import load_dotenv
 from aiogram.types import Message
-from aiogram.filters import Command
+from aiogram.filters import Command,StateFilter
 from models import BotSession
 from database import SessionLocal
 from aiogram.fsm.context import FSMContext
@@ -120,11 +120,11 @@ async def show_category_notes(callback: CallbackQuery,callback_data:CategoryCall
     else:
         text = f"{categories['name']}\n\n"
         for note in notes:
-            text += f"{note['title']}\n\n"
+            text += f"{note['id']}: {note['title']}\n"
     keyboard = InlineKeyboardMarkup(inline_keyboard = [
         [
         InlineKeyboardButton(text = "Добавить",callback_data = NoteAction(action = "add",category_id = callback_data.category_id).pack()),
-        InlineKeyboardButton(text = "Удалить",callback_data = NoteAction(action="delete",category_Id = callback_data.category_id).pack()),
+        InlineKeyboardButton(text = "Удалить",callback_data = NoteAction(action="delete",category_id = callback_data.category_id).pack()),
         ],
         [
             InlineKeyboardButton(text = "Назад",callback_data = NoteAction(action = "back",category_id = callback_data.category_id).pack()),
@@ -138,7 +138,7 @@ async def show_category_notes(callback: CallbackQuery,callback_data:CategoryCall
 @dp.callback_query(NoteAction.filter())
 async def show_notes(callback: CallbackQuery, callback_data: NoteAction, state: FSMContext):
     if callback_data.action == "back":
-        token = get_access_token(callback.from_user.id)
+        token = await get_access_token(callback.from_user.id)
         if not token:
             return
         headers = {"Authorization":f"Bearer {token}"}
@@ -335,6 +335,55 @@ async def delete_note(message: Message):
         await message.answer("Заметка не найдена")
     else:
         await message.answer("Ошибка удаления")
+
+@dp.message(StateFilter("waiting_note_title"))
+async def receive_note_title(message: Message, state: FSMContext):
+    data = await state.get_data()
+    category_id = data["category_id"]
+    title = message.text
+    token = await get_access_token(message.from_user.id)
+    if not token:
+        await message.answer("Сначала залогиньтесь")
+        return
+    headers = {"Authorization":f"Bearer {token}"}
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            f"{API_URL}/notes",
+            json = {"title": title, "category_id": category_id},
+            headers = headers
+        )
+    if response.status_code == 200:
+        await message.answer(f"Заметка {title} успешна добавлена")
+    else:
+        await message.answer("Ошибка")
+    await state.clear()
+
+
+@dp.message(StateFilter("waiting_note_delete"))
+async def receive_note_delete(message: Message, state: FSMContext):
+    if not message.text.isdigit():
+        await message.answer("Это не похоже на ID. Введи число.")
+        return
+
+    note_id = int(message.text)
+    token = await get_access_token(message.from_user.id)
+    if not token:
+        await message.answer("Сначала войди через /login")
+        await state.clear()
+        return
+    async with httpx.AsyncClient() as client:
+        response = await client.delete(
+            f"{API_URL}/notes/{note_id}",
+            headers = {"Authorization":f"Bearer {token}"}
+        )
+        if response.status_code == 200:
+            await message.answer("Заметка успешно удалена")
+        elif response.status_code == 404:
+            await message.answer("Заметка не найдена")
+        else:
+            await message.answer("Ошибка")
+    await state.clear()
+
 
 
 @dp.message()
