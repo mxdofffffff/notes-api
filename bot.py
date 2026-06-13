@@ -47,6 +47,34 @@ async def get_access_token(telegram_id:int):
     finally:
         db.close()
 
+async def render_category(category_id:int , headers: dict):
+    async with httpx.AsyncClient() as client:
+        category_response = await client.get(f"{API_URL}/categories/{category_id}",headers=headers)
+        notes_response = await client.get(f"{API_URL}/categories/{category_id}/notes",headers=headers)
+
+    categories=category_response.json()
+    notes=notes_response.json()
+
+    if not notes:
+        text = f"{categories['name']}\nНет заметок"
+    else:
+        text = f"{categories['name']}\n\n"
+        for note in notes:
+            text += f"{note['id']}: {note['title']}\n"
+
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="Добавить",
+                                 callback_data=NoteAction(action="add", category_id=category_id).pack()),
+            InlineKeyboardButton(text="Удалить",
+                                 callback_data=NoteAction(action="delete", category_id=category_id).pack()),
+        ],
+        [
+            InlineKeyboardButton(text="Назад", callback_data=NoteAction(action="back", category_id=category_id).pack()),
+        ]
+    ])
+    return text, keyboard
+
 
 class CategoryCallback(CallbackData,prefix = "cat"):
     category_id: int
@@ -292,6 +320,8 @@ async def notes(message: Message):
     await message.answer(text)
 
 
+
+
 @dp.message(Command("add"))
 async def add_note(message: Message):
     parts = message.text.strip().split(maxsplit = 2)
@@ -316,6 +346,8 @@ async def add_note(message: Message):
         await message.answer(f"Ошибка:{response.status_code}")
 
 
+
+
 @dp.message(Command("delete"))
 async def delete_note(message: Message):
     parts = message.text.strip().split()
@@ -335,6 +367,8 @@ async def delete_note(message: Message):
         await message.answer("Заметка не найдена")
     else:
         await message.answer("Ошибка удаления")
+
+
 
 @dp.message(StateFilter("waiting_note_title"))
 async def receive_note_title(message: Message, state: FSMContext):
@@ -357,6 +391,7 @@ async def receive_note_title(message: Message, state: FSMContext):
     else:
         await message.answer("Ошибка")
     await state.clear()
+
 
 
 @dp.message(StateFilter("waiting_note_delete"))
@@ -383,7 +418,6 @@ async def receive_note_delete(message: Message, state: FSMContext):
         else:
             await message.answer("Ошибка")
     await state.clear()
-
 
 
 @dp.message()
