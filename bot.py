@@ -101,9 +101,9 @@ async def start(message: Message):
 @dp.callback_query(CategoryCallback.filter())
 async def show_category_notes(callback: CallbackQuery,callback_data:CategoryCallback):
     token = await get_access_token(callback.from_user.id)
-    headers = {"Authorization":f"Bearer {token}"}
     if not token:
         return
+    headers = {"Authorization":f"Bearer {token}"}
     async with httpx.AsyncClient() as client:
         category_response = await client.get(
             f"{API_URL}/categories/{callback_data.category_id}",
@@ -132,6 +132,42 @@ async def show_category_notes(callback: CallbackQuery,callback_data:CategoryCall
     ])
     await callback.message.edit_text(text,reply_markup = keyboard)
     await callback.answer()
+
+
+
+@dp.callback_query(NoteAction.filter())
+async def show_notes(callback: CallbackQuery, callback_data: NoteAction, state: FSMContext):
+    if callback_data.action == "back":
+        token = get_access_token(callback.from_user.id)
+        if not token:
+            return
+        headers = {"Authorization":f"Bearer {token}"}
+        async with httpx.AsyncClient() as client:
+            category_response = await client.get(f"{API_URL}/categories",headers = headers)
+        categories = category_response.json()
+        buttons = [
+            [
+                InlineKeyboardButton(
+                text = f"{cat['name']}",
+                callback_data = CategoryCallback(category_id = cat['id']).pack()
+            )
+            ]
+            for cat in categories
+        ]
+        keyboard = InlineKeyboardMarkup(inline_keyboard = buttons)
+        await callback.message.edit_text("Твои категории:", reply_markup=keyboard)
+
+    elif callback_data.action == "add":
+        await state.set_data({"category_id":callback_data.category_id})
+        await callback.message.answer("Напиши название заметки")
+        await state.set_state("waiting_note_title")
+
+    elif callback_data.action == "delete":
+        await callback.message.answer("Напиши ID заметки которую хочешь удалить")
+        await state.set_state("waiting_note_delete")
+
+    await callback.answer()
+
 
 @dp.message(Command("register"))
 async def register(message: Message):
