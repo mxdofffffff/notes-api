@@ -1,15 +1,15 @@
 import time
 import psycopg2
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 while True:
     try:
-        conn = psycopg2.connect(
-            dbname="notes_db",
-            user="postgres",
-            password="postgres",
-            host="db",
-            port="5432"
-        )
+        conn = psycopg2.connect(DATABASE_URL)
         conn.close()
         print("DB is ready!")
         break
